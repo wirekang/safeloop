@@ -30,19 +30,17 @@ func TestLoopLimit(t *testing.T) {
 		return nil
 	})
 
-	safeloop.Loop(context.Background(), safeloop.LoopOption{
+	err := safeloop.Loop(context.Background(), safeloop.LoopOption{
 		Step:  f,
 		Limit: limit,
 
 		OnError: func(err error) {
 			t.Fatal(err)
 		},
-		OnFinish: func(err error) {
-			if err != nil {
-				t.Fatal(err)
-			}
-		},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestLoopDelayBefore(t *testing.T) {
@@ -59,28 +57,25 @@ func TestLoopDelayBefore(t *testing.T) {
 }
 
 func TestLoopOnce1(t *testing.T) {
+	called := false
 	f := makeStep(func() error {
+		if called {
+			t.Fatal("called twice")
+		}
+		called = true
 		return nil
 	})
 
-	onFinished := false
-	safeloop.Loop(context.Background(), safeloop.LoopOption{
+	err := safeloop.Loop(context.Background(), safeloop.LoopOption{
 		Step: f,
 		OnError: func(err error) {
 			t.Fatal(err)
 		},
-		OnFinish: func(err error) {
-			if onFinished {
-				t.Fatal("onFinish twice")
-			}
-
-			onFinished = true
-			if err != nil {
-				t.Fatal(err)
-			}
-		},
 		Once: true,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestLoopOnce2(t *testing.T) {
@@ -98,18 +93,16 @@ func TestLoopOnce2(t *testing.T) {
 
 	onErrorCount := 0
 
-	safeloop.Loop(context.Background(), safeloop.LoopOption{
+	err := safeloop.Loop(context.Background(), safeloop.LoopOption{
 		Step: f,
 		OnError: func(err error) {
 			onErrorCount += 1
 		},
-		OnFinish: func(err error) {
-			if err != nil {
-				t.Fatal(err)
-			}
-		},
 		Once: true,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if onErrorCount != count {
 		t.Fatalf("count mismatch %d %d", onErrorCount, count)

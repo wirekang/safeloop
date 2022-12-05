@@ -20,9 +20,6 @@ type LoopOption struct {
 	// OnError called when Step returns error.
 	OnError func(error)
 
-	// OnFinish called when the loop finished. The loop could be finished by Limit or Once.
-	OnFinish func(error)
-
 	// Limit is max loop count regardless of success. Default is 0 which means infinity.
 	Limit uint64
 
@@ -30,7 +27,7 @@ type LoopOption struct {
 	Once bool
 }
 
-func Loop(ctx context.Context, opt LoopOption) {
+func Loop(ctx context.Context, opt LoopOption) error {
 	if opt.Step == nil {
 		panic("Step is nil")
 	}
@@ -43,8 +40,7 @@ func Loop(ctx context.Context, opt LoopOption) {
 		err := ctx.Err()
 		if err != nil {
 			call(opt.OnError, err)
-			call(opt.OnFinish, err)
-			return
+			return err
 		}
 
 		err = stepWrapper(time.Since(startTime))
@@ -53,8 +49,7 @@ func Loop(ctx context.Context, opt LoopOption) {
 		}
 
 		if (opt.Once && err == nil) || (opt.Limit > 0 && i == opt.Limit) {
-			call(opt.OnFinish, err)
-			return
+			return err
 		}
 
 		time.Sleep(opt.DelayBetween)
